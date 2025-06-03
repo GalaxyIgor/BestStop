@@ -1,84 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Heatmap com Fundo Verde</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BestStop - Monitoramento de Vagas</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <style>
-    #map {
-      width: 800px;
-      height: 600px;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="map"></div>
+  <header class="main-header">
+    <div class="header-content">
+      <div class="logo-container">
+        <i class="fas fa-parking logo-icon"></i>
+        <h1 class="logo-text">BestStop</h1>
+      </div>
+      <nav class="header-nav">
+        <a href="#" class="nav-link active" data-tab="dashboard"><i class="fas fa-map"></i> Mapa</a>
+        <a href="#" class="nav-link" data-tab="config"><i class="fas fa-cog"></i> Configurações</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="dashboard-container">
+    <!-- Aba do Dashboard -->
+    <div id="dashboard" class="tab-content active">
+      <section class="info-cards">
+        <div class="info-card">
+          <div class="card-icon bg-blue">
+            <i class="fas fa-car"></i>
+          </div>
+          <div class="card-content">
+            <h3>Vagas Ocupadas</h3>
+            <p id="occupied" class="card-value">0</p>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="card-icon bg-green">
+            <i class="fas fa-car-side"></i>
+          </div>
+          <div class="card-content">
+            <h3>Vagas Livres</h3>
+            <p id="available" class="card-value">0</p>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="card-icon bg-purple">
+            <i class="fas fa-parking"></i>
+          </div>
+          <div class="card-content">
+            <h3>Total de Vagas</h3>
+            <p id="total-spots" class="card-value">0</p>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="card-icon bg-orange">
+            <i class="fas fa-percentage"></i>
+          </div>
+          <div class="card-content">
+            <h3>Taxa de Ocupação</h3>
+            <p id="occupancy-rate" class="card-value">0%</p>
+          </div>
+        </div>
+        
+        <div class="info-card">
+          <div class="card-icon bg-gray">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="card-content">
+            <h3>Última Atualização</h3>
+            <p id="last-update" class="card-value">--/--/---- --:--</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="map-container">
+        <div id="map"></div>
+        <div class="map-legend">
+          <div class="legend-item">
+            <span class="legend-color" style="background: green;"></span>
+            <span class="legend-label">Área Livre</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: yellow;"></span>
+            <span class="legend-label">Baixa Ocupação</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: orange;"></span>
+            <span class="legend-label">Média Ocupação</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: red;"></span>
+            <span class="legend-label">Alta Ocupação</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba de Configuração -->
+    <div id="config" class="tab-content">
+      <div class="config-container">
+        <div class="config-form">
+          <h2><i class="fas fa-cog"></i> Configurar Vagas</h2>
+          
+          <div class="form-group">
+            <label for="spot-column"><i class="fas fa-columns"></i> Coluna:</label>
+            <select id="spot-column" class="form-control">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="spot-row"><i class="fas fa-bars"></i> Fila:</label>
+            <input type="number" id="spot-row" class="form-control" min="1" value="1">
+          </div>
+          
+          <div class="form-group">
+            <label for="spot-status"><i class="fas fa-car"></i> Status:</label>
+            <select id="spot-status" class="form-control">
+              <option value="false">Livre</option>
+              <option value="true">Ocupada</option>
+            </select>
+          </div>
+          
+          <div class="form-actions">
+            <button id="save-config" class="btn btn-primary">
+              <i class="fas fa-save"></i> Salvar Configuração
+            </button>
+            <button id="clear-config" class="btn btn-danger">
+              <i class="fas fa-trash"></i> Limpar Tudo
+            </button>
+          </div>
+        </div>
+        
+        <div class="config-preview">
+          <div class="config-map-container">
+            <div id="config-map"></div>
+            <div id="spots-preview"></div>
+          </div>
+          <div id="spots-list" class="spots-list"></div>
+        </div>
+      </div>
+    </div>
+  </main>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
-  <script>
-    const mapWidth = 800;
-    const mapHeight = 600;
-
-    const map = L.map('map', {
-      crs: L.CRS.Simple,
-      minZoom: -1,
-      maxZoom: 2,
-      zoomControl: true
-    });
-
-    const bounds = [[0, 0], [mapHeight, mapWidth]];
-    L.imageOverlay('background.png', bounds).addTo(map);
-    map.fitBounds(bounds);
-
-    // Função para gerar pontos de fundo verde
-    function generateGreenBackgroundPoints(width, height, spacing, realPoints, radius) {
-      const bgPoints = [];
-      for (let y = 0; y < height; y += spacing) {
-        for (let x = 0; x < width; x += spacing) {
-          const close = realPoints.some(p => {
-            const dx = p.x - x;
-            const dy = p.y - y;
-            return Math.sqrt(dx * dx + dy * dy) < radius * 2;
-          });
-          if (!close) {
-            bgPoints.push([y, x, 0.1]); // ponto verde com intensidade baixa
-          }
-        }
-      }
-      return bgPoints;
-    }
-
-    fetch('data.json')
-      .then(res => res.json())
-      .then(data => {
-        const realPoints = data.map(p => ({ x: p.x, y: p.y, intensity: Math.max(p.intensity, 0.01) }));
-        const heatDataMain = realPoints.map(p => [p.y, p.x, p.intensity]);
-
-        // Gerar camada verde de fundo
-        const greenPoints = generateGreenBackgroundPoints(mapWidth, mapHeight, 15, realPoints, 12);
-        L.heatLayer(greenPoints, {
-          radius: 30,
-          blur: 20,
-          maxZoom: 1,
-          gradient: {
-            0.1: 'green',
-            1.0: 'green'
-          }
-        }).addTo(map);
-
-        // Adicionar camada de calor real por cima
-        L.heatLayer(heatDataMain, {
-          radius: 30,
-          blur: 20,
-          maxZoom: 1,
-          gradient: {
-            0.2: 'yellow',
-            0.6: 'orange',
-            1.0: 'red'
-          }
-        }).addTo(map);
-      });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
