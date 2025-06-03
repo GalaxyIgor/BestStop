@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Heatmap em Imagem</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script>
+    const mapWidth = 800;  // largura da imagem
+    const mapHeight = 600; // altura da imagem
+
+    // Cria o mapa com sistema de coordenadas simples
+    const map = L.map('map', {
+      crs: L.CRS.Simple,
+      minZoom: -1,
+      maxZoom: 2,
+      zoomControl: true
+    });
+
+    const bounds = [[0, 0], [mapHeight, mapWidth]];
+
+    // Adiciona a imagem como base do mapa
+    const image = L.imageOverlay('background.png', bounds).addTo(map);
+    map.fitBounds(bounds);
+
+    // Carrega os pontos do JSON
+    fetch('data.json')
+      .then(res => res.json())
+      .then(data => {
+        const heatData = data.map(p => [p.y, p.x, p.intensity]); // y = linha, x = coluna
+        L.heatLayer(heatData, {
+          radius: 30,
+          blur: 20,
+          maxZoom: 1,
+          gradient: {
+            0.0: 'green',
+            0.5: 'yellow',
+            1.0: 'red'
+          }
+        }).addTo(map);
+      });
+  </script>
+</body>
+</html>
