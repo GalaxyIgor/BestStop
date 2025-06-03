@@ -458,5 +458,58 @@ function toggleSpotStatus(id) {
     }
 }
 
+// Adicione no início do arquivo, após a definição dos elementos
+const themeSwitcher = document.createElement('div');
+themeSwitcher.className = 'theme-switcher';
+themeSwitcher.innerHTML = `
+  <button class="theme-btn light" data-theme="light"><i class="fas fa-sun"></i></button>
+  <button class="theme-btn dark" data-theme="dark"><i class="fas fa-moon"></i></button>
+  <button class="theme-btn modern" data-theme="modern"><i class="fas fa-paint-brush"></i></button>
+`;
+document.body.appendChild(themeSwitcher);
+
+// Adicione esta função após a função setupTabs()
+function setupThemeSwitcher() {
+    const themeButtons = document.querySelectorAll('.theme-btn');
+    
+    themeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const theme = button.getAttribute('data-theme');
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('beststop-theme', theme);
+            
+            // Adiciona efeito de loading ao trocar tema
+            showLoading('Aplicando tema...');
+            setTimeout(hideLoading, 800);
+        });
+    });
+    
+    // Carrega tema salvo
+    const savedTheme = localStorage.getItem('beststop-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+}
+
+// Adicione estas funções para o efeito de loading
+function showLoading(message = 'Carregando...') {
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.className = 'loading-overlay active';
+    loadingOverlay.innerHTML = `
+        <div class="loader"></div>
+        <div class="loading-text">${message}</div>
+    `;
+    document.body.appendChild(loadingOverlay);
+}
+
+function hideLoading() {
+    const loadingOverlay = document.querySelector('.loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('active');
+        setTimeout(() => {
+            loadingOverlay.remove();
+        }, 300);
+    }
+}
+
+
 // Iniciar a aplicação quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initApp);
