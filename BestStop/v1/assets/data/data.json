@@ -5,25 +5,25 @@
       "id": "CORREDOR",
       "name": "Corredor Central",
       "coords": [[45, -95], [45, 95]],
-      "density": 0.65,
-      "trend": "increase",
+      "density": 0.20,
+      "trend": "stable",
       "alert": false
     },
     {
       "id": "VAGAS_ESQUERDA",
       "name": "Vagas Esquerda",
       "coords": [[80, -95], [50, -5]],
-      "density": 0.42,
-      "occupation": "15/20",
-      "trend": "stable"
+      "density": 0.65,
+      "occupation": "13/20",
+      "trend": "increase"
     },
     {
       "id": "VAGAS_DIREITA",
       "name": "Vagas Direita",
       "coords": [[80, 5], [50, 95]],
-      "density": 0.38,
-      "occupation": "12/20",
-      "trend": "decrease"
+      "density": 0.53,
+      "occupation": "11/20",
+      "trend": "stable"
     }
   ],
   "metadata": {

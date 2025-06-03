@@ -1,10 +1,15 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Heatmap em Imagem</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+  <title>Heatmap com Fundo Verde</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      width: 800px;
+      height: 600px;
+    }
+  </style>
 </head>
 <body>
   <div id="map"></div>
@@ -12,10 +17,9 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
   <script>
-    const mapWidth = 800;  // largura da imagem
-    const mapHeight = 600; // altura da imagem
+    const mapWidth = 800;
+    const mapHeight = 600;
 
-    // Cria o mapa com sistema de coordenadas simples
     const map = L.map('map', {
       crs: L.CRS.Simple,
       minZoom: -1,
@@ -24,23 +28,53 @@
     });
 
     const bounds = [[0, 0], [mapHeight, mapWidth]];
-
-    // Adiciona a imagem como base do mapa
-    const image = L.imageOverlay('background.png', bounds).addTo(map);
+    L.imageOverlay('background.png', bounds).addTo(map);
     map.fitBounds(bounds);
 
-    // Carrega os pontos do JSON
+    // Função para gerar pontos de fundo verde
+    function generateGreenBackgroundPoints(width, height, spacing, realPoints, radius) {
+      const bgPoints = [];
+      for (let y = 0; y < height; y += spacing) {
+        for (let x = 0; x < width; x += spacing) {
+          const close = realPoints.some(p => {
+            const dx = p.x - x;
+            const dy = p.y - y;
+            return Math.sqrt(dx * dx + dy * dy) < radius * 2;
+          });
+          if (!close) {
+            bgPoints.push([y, x, 0.1]); // ponto verde com intensidade baixa
+          }
+        }
+      }
+      return bgPoints;
+    }
+
     fetch('data.json')
       .then(res => res.json())
       .then(data => {
-        const heatData = data.map(p => [p.y, p.x, p.intensity]); // y = linha, x = coluna
-        L.heatLayer(heatData, {
+        const realPoints = data.map(p => ({ x: p.x, y: p.y, intensity: Math.max(p.intensity, 0.01) }));
+        const heatDataMain = realPoints.map(p => [p.y, p.x, p.intensity]);
+
+        // Gerar camada verde de fundo
+        const greenPoints = generateGreenBackgroundPoints(mapWidth, mapHeight, 15, realPoints, 12);
+        L.heatLayer(greenPoints, {
           radius: 30,
           blur: 20,
           maxZoom: 1,
           gradient: {
-            0.0: 'green',
-            0.5: 'yellow',
+            0.1: 'green',
+            1.0: 'green'
+          }
+        }).addTo(map);
+
+        // Adicionar camada de calor real por cima
+        L.heatLayer(heatDataMain, {
+          radius: 30,
+          blur: 20,
+          maxZoom: 1,
+          gradient: {
+            0.2: 'yellow',
+            0.6: 'orange',
             1.0: 'red'
           }
         }).addTo(map);
