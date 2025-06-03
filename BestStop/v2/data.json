@@ -1,0 +1,9 @@
+{
+    "totalSpots": 30,
+    "lastUpdate": "2023-11-15T14:30:00Z",
+    "spots": [
+        {"id": 1, "x": 120, "y": 85, "occupied": true, "confidence": 0.95},
+        {"id": 2, "x": 180, "y": 85, "occupied": false, "confidence": 0.90},
+        {"id": 3, "x": 240, "y": 85, "occupied": true, "confidence": 0.85}
+    ]
+}

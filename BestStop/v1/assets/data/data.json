@@ -1,0 +1,33 @@
+{
+  "last_update": "2023-11-15T14:30:00Z",
+  "areas": [
+    {
+      "id": "CORREDOR",
+      "name": "Corredor Central",
+      "coords": [[45, -95], [45, 95]],
+      "density": 0.65,
+      "trend": "increase",
+      "alert": false
+    },
+    {
+      "id": "VAGAS_ESQUERDA",
+      "name": "Vagas Esquerda",
+      "coords": [[80, -95], [50, -5]],
+      "density": 0.42,
+      "occupation": "15/20",
+      "trend": "stable"
+    },
+    {
+      "id": "VAGAS_DIREITA",
+      "name": "Vagas Direita",
+      "coords": [[80, 5], [50, 95]],
+      "density": 0.38,
+      "occupation": "12/20",
+      "trend": "decrease"
+    }
+  ],
+  "metadata": {
+    "source": "IA Vision System v3.2",
+    "confidence": 0.92
+  }
+}
