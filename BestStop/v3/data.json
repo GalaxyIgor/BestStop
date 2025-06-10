@@ -37,11 +37,11 @@
     { "x": 700, "y": 150, "intensity": 1 },
     { "x": 700, "y": 210, "intensity": 1 },
     { "x": 700, "y": 260, "intensity": 1 },
-    { "x": 700, "y": 320, "intensity": 1 },
-    { "x": 700, "y": 370, "intensity": 1 },
-    { "x": 700, "y": 430, "intensity": 1 },
-    { "x": 700, "y": 490, "intensity": 1 },
-    { "x": 700, "y": 540, "intensity": 1 }
+    { "x": 700, "y": 320, "intensity": 0.1 },
+    { "x": 700, "y": 370, "intensity": 0.1 },
+    { "x": 700, "y": 430, "intensity": 0.1 },
+    { "x": 700, "y": 490, "intensity": 0.1},
+    { "x": 700, "y": 540, "intensity": 0 }
 
 
 ]
