@@ -805,3 +805,88 @@ body {
   80% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-20px); }
 }
+
+/* Adicionar estas regras ao final do arquivo */
+
+/* Ajustes específicos para mobile */
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 0;
+    grid-template-rows: auto auto 1fr;
+  }
+  
+  .info-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .map-container {
+    height: 60vh;
+    min-height: 300px;
+    border-radius: 0;
+    margin: 0 -10px;
+    width: calc(100% + 20px);
+  }
+  
+  #map {
+    height: 100%;
+  }
+  
+  .map-legend {
+    bottom: 10px;
+    right: 10px;
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+  
+  .info-card {
+    padding: 0.8rem;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .card-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+  }
+  
+  .card-content h3 {
+    font-size: 0.8rem;
+  }
+  
+  .card-value {
+    font-size: 1.2rem;
+  }
+  
+  .header-content {
+    flex-direction: row;
+    padding: 0.5rem;
+  }
+  
+  .logo-text {
+    font-size: 1.2rem;
+  }
+  
+  .nav-link {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Orientação paisagem */
+@media (max-width: 768px) and (orientation: landscape) {
+  .dashboard-container {
+    grid-template-rows: auto 1fr;
+  }
+  
+  .info-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .map-container {
+    height: 50vh;
+  }
+}

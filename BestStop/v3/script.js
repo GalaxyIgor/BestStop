@@ -101,6 +101,7 @@ function debounce(func, timeout = 300) {
 
 // Função para redimensionamento responsivo
 function handleResponsiveLayout() {
+    const isMobile = window.innerWidth <= 480;
     const headerHeight = document.querySelector('.main-header').offsetHeight;
     const viewportHeight = window.innerHeight;
     const cardsHeight = document.querySelector('.info-cards').offsetHeight;
@@ -108,7 +109,18 @@ function handleResponsiveLayout() {
     // Ajuste automático do mapa
     const mapContainer = document.querySelector('.map-container');
     if (mapContainer) {
-        mapContainer.style.height = `${viewportHeight - headerHeight - cardsHeight - 50}px`;
+        if (isMobile) {
+            mapContainer.style.height = `${viewportHeight * 0.6}px`;
+        } else {
+            mapContainer.style.height = `${viewportHeight - headerHeight - cardsHeight - 50}px`;
+        }
+    }
+    
+    // Redimensionar o mapa se necessário
+    if (map) {
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 300);
     }
 }
 
