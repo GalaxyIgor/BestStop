@@ -8,21 +8,7 @@ const elements = {
     lastUpdate: document.getElementById('last-update'),
     
     // Mapa
-    map: document.getElementById('map'),
-    
-    // Configuração
-    configMap: document.getElementById('config-map'),
-    spotsPreview: document.getElementById('spots-preview'),
-    spotsList: document.getElementById('spots-list'),
-    spotColumn: document.getElementById('spot-column'),
-    spotRow: document.getElementById('spot-row'),
-    spotStatus: document.getElementById('spot-status'),
-    saveButton: document.getElementById('save-config'),
-    clearButton: document.getElementById('clear-config'),
-    
-    // Abas
-    tabLinks: document.querySelectorAll('.nav-link'),
-    tabContents: document.querySelectorAll('.tab-content')
+    map: document.getElementById('map')
 };
 
 // Estado do estacionamento
@@ -31,95 +17,147 @@ let parkingState = {
     occupied: 0,
     available: 0,
     lastUpdate: null,
-    spots: [],
-    layout: {
-        columns: 4,
-        rows: 10,
-        leftMargin: 50,
-        topMargin: 30,
-        colSpacing: 150,
-        rowSpacing: 40
-    }
+    spots: []
 };
 
-// Variáveis para configuração
-let configMode = false;
-let currentSpotId = 0;
-let spotsBeingConfigured = [];
-let map, configMap, heatLayer;
+let map, heatLayer;
 
-// Inicialização da aplicação
+// Configuração inicial
+// Atualize o initApp() para incluir:
 async function initApp() {
-    setupTabs();
+    setupThemeSwitcher();
     setupMap();
-    setupConfigMap();
+    handleResponsiveLayout();
     
-    const parkingData = await loadParkingData();
-    if (parkingData) {
-        updateParkingState(parkingData);
-        setupConfigMode();
-        
-        // Simular atualização periódica apenas na aba de visualização
-        setInterval(async () => {
-            if (!configMode) {
-                const newData = await loadParkingData();
-                if (newData) updateParkingState(newData);
-            }
-        }, 5000);
+    window.addEventListener('resize', debounce(() => {
+        handleResponsiveLayout();
+        if (map) map.invalidateSize();
+    }, 200));
+
+    try {
+        const parkingData = await loadParkingData();
+        if (parkingData) {
+            updateParkingState(parkingData);
+            setupAutoRefresh();
+        }
+    } catch (error) {
+        showErrorToUser("Erro ao carregar dados do estacionamento");
+        console.error("Initialization error:", error);
+    }
+    
+    // Mostrar notificação inicial
+    showNotification('Sistema conectado com sucesso', 'success');
+}
+
+
+// Tratamento de erros melhorado
+async function loadParkingData() {
+    try {
+        const response = await fetch('data.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return processHeatmapData(data);
+    } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+        throw error;
     }
 }
 
-// Configurar o mapa principal
+function showErrorToUser(message) {
+    const errorEl = document.createElement('div');
+    errorEl.className = 'error-message';
+    errorEl.textContent = message;
+    document.body.prepend(errorEl);
+    setTimeout(() => errorEl.remove(), 5000);
+}
+
+// Auto-refresh com debounce
+function setupAutoRefresh() {
+    const refreshInterval = setInterval(async () => {
+        try {
+            const newData = await loadParkingData();
+            if (newData) updateParkingState(newData);
+        } catch (error) {
+            console.error("Refresh error:", error);
+            clearInterval(refreshInterval);
+        }
+    }, 5000);
+
+    // Debounce para redimensionamento
+    window.addEventListener('resize', debounce(() => {
+        if (map) map.invalidateSize();
+    }, 250));
+}
+
+function debounce(func, timeout = 300) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
+// Função para redimensionamento responsivo
+function handleResponsiveLayout() {
+    const headerHeight = document.querySelector('.main-header').offsetHeight;
+    const viewportHeight = window.innerHeight;
+    const cardsHeight = document.querySelector('.info-cards').offsetHeight;
+    
+    // Ajuste automático do mapa
+    const mapContainer = document.querySelector('.map-container');
+    if (mapContainer) {
+        mapContainer.style.height = `${viewportHeight - headerHeight - cardsHeight - 50}px`;
+    }
+}
+
 function setupMap() {
     const mapWidth = 800;
     const mapHeight = 600;
 
     map = L.map('map', {
         crs: L.CRS.Simple,
-        minZoom: -1,
-        maxZoom: 2,
-        zoomControl: true
+        minZoom: -2,
+        maxZoom: 4,
+        zoomSnap: 0.25,
+        zoomDelta: 0.25,
+        wheelPxPerZoomLevel: 120,
+        zoomControl: true,
+        preferCanvas: true
+    });
+
+    // Controle de zoom mais preciso
+    map.scrollWheelZoom._delta = 0.2;
+    map.touchZoom._delta = 0.1;
+
+    // Suavização de zoom
+    map.on('zoomanim', function(e) {
+        map.setView(e.center, e.zoom, {
+            animate: true,
+            duration: 0.3
+        });
+    });
+
+    // Desabilita zoom com double click padrão
+    map.doubleClickZoom.disable();
+    
+    // Zoom personalizado com double click
+    map.on('dblclick', function(e) {
+        map.setView(e.latlng, map.getZoom() + 0.5, {
+            animate: true,
+            duration: 0.3
+        });
     });
 
     const bounds = [[0, 0], [mapHeight, mapWidth]];
-    L.imageOverlay('background.png', bounds).addTo(map);
+    L.imageOverlay('background.webp', bounds, {
+        errorOverlayUrl: 'background.png',
+        alt: 'Mapa do estacionamento'
+    }).addTo(map);
+    
     map.fitBounds(bounds);
-}
-
-// Configurar o mapa de configuração
-function setupConfigMap() {
-    const mapWidth = 800;
-    const mapHeight = 600;
-
-    configMap = L.map('config-map', {
-        crs: L.CRS.Simple,
-        minZoom: -1,
-        maxZoom: 2,
-        zoomControl: false,
-        dragging: false,
-        doubleClickZoom: false,
-        boxZoom: false,
-        scrollWheelZoom: false
-    });
-
-    const bounds = [[0, 0], [mapHeight, mapWidth]];
-    L.imageOverlay('background.png', bounds).addTo(configMap);
-    configMap.fitBounds(bounds);
-}
-
-// Carregar dados do JSON
-async function loadParkingData() {
-    try {
-        const response = await fetch('data.json');
-        if (!response.ok) {
-            throw new Error('Falha ao carregar dados');
-        }
-        const data = await response.json();
-        return processHeatmapData(data);
-    } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        return null;
-    }
+    map.setZoom(0);
 }
 
 // Processar dados para o heatmap
@@ -239,226 +277,14 @@ function updateParkingState(data) {
         occupied: data.occupied || data.spots.filter(spot => spot.intensity > 2).length,
         available: data.available || (data.totalSpots || data.spots.length) - (data.occupied || data.spots.filter(spot => spot.intensity > 2).length),
         lastUpdate: data.lastUpdate || new Date().toISOString(),
-        spots: data.spots,
-        layout: data.layout || parkingState.layout
+        spots: data.spots
     };
     
     updateStatusDisplay();
     updateHeatmap();
 }
 
-// Configurar o sistema de abas
-function setupTabs() {
-    elements.tabLinks.forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Remove active class from all buttons and contents
-            elements.tabLinks.forEach(btn => btn.classList.remove('active'));
-            elements.tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked button and corresponding content
-            button.classList.add('active');
-            const tabId = button.getAttribute('data-tab');
-            document.getElementById(tabId).classList.add('active');
-            
-            // Atualiza o modo
-            configMode = tabId === 'config';
-            
-            // Redimensiona o mapa quando a aba é alterada
-            setTimeout(() => {
-                if (map) map.invalidateSize();
-                if (configMap) configMap.invalidateSize();
-            }, 100);
-        });
-    });
-}
-
-// Configurar o modo de configuração
-function setupConfigMode() {
-    // Carrega as vagas existentes
-    loadExistingSpots();
-
-    // Adiciona nova vaga ao clicar na imagem
-    elements.configMap._container.addEventListener('click', (e) => {
-        if (!configMode) return;
-
-        const rect = elements.configMap._container.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Converte coordenadas da tela para coordenadas do mapa
-        const point = configMap.containerPointToLatLng([x, y]);
-        const mapX = point.y;
-        const mapY = point.x;
-
-        const column = elements.spotColumn.value;
-        const row = elements.spotRow.value;
-        const occupied = elements.spotStatus.value === 'true';
-
-        const newSpot = {
-            id: ++currentSpotId,
-            x: mapX,
-            y: mapY,
-            column: parseInt(column),
-            row: parseInt(row),
-            occupied: occupied,
-            intensity: occupied ? 4 : 0.5
-        };
-
-        spotsBeingConfigured.push(newSpot);
-        renderConfiguredSpots();
-    });
-
-    // Salvar configuração
-    elements.saveButton.addEventListener('click', async () => {
-        if (spotsBeingConfigured.length === 0) {
-            alert('Adicione pelo menos uma vaga antes de salvar');
-            return;
-        }
-
-        const newData = {
-            totalSpots: spotsBeingConfigured.length,
-            occupied: spotsBeingConfigured.filter(s => s.occupied).length,
-            available: spotsBeingConfigured.filter(s => !s.occupied).length,
-            lastUpdate: new Date().toISOString(),
-            spots: spotsBeingConfigured
-        };
-
-        // Salvando os dados
-        const saved = await saveParkingData(newData);
-        if (saved) {
-            alert('Configuração salva com sucesso! Atualizando visualização...');
-            // Atualiza a visualização
-            updateParkingState(newData);
-        } else {
-            alert('Erro ao salvar configuração');
-        }
-    });
-
-    // Limpar configuração
-    elements.clearButton.addEventListener('click', () => {
-        if (confirm('Tem certeza que deseja limpar todas as vagas configuradas?')) {
-            spotsBeingConfigured = [];
-            currentSpotId = 0;
-            renderConfiguredSpots();
-        }
-    });
-}
-
-// Salvar dados no JSON
-async function saveParkingData(data) {
-    try {
-        // Criar um blob com os dados
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        
-        // Criar link para download
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'data.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        console.log('Dados prontos para serem salvos em data.json');
-        return true;
-    } catch (error) {
-        console.error('Erro ao salvar dados:', error);
-        return false;
-    }
-}
-
-// Carregar vagas existentes
-function loadExistingSpots() {
-    spotsBeingConfigured = [...parkingState.spots.map(spot => ({
-        ...spot,
-        occupied: spot.intensity > 2
-    }))];
-    
-    currentSpotId = spotsBeingConfigured.length > 0 ? 
-        Math.max(...spotsBeingConfigured.map(s => s.id)) : 0;
-    renderConfiguredSpots();
-}
-
-// Renderizar vagas configuradas
-function renderConfiguredSpots() {
-    // Limpa a visualização
-    elements.spotsPreview.innerHTML = '';
-    elements.spotsList.innerHTML = '';
-
-    // Adiciona marcadores na imagem
-    spotsBeingConfigured.forEach(spot => {
-        const marker = document.createElement('div');
-        marker.className = `spot-marker ${spot.occupied ? 'occupied' : ''}`;
-        
-        // Converte coordenadas do mapa para coordenadas da tela
-        const point = configMap.latLngToContainerPoint([spot.y, spot.x]);
-        marker.style.left = `${point.x}px`;
-        marker.style.top = `${point.y}px`;
-        
-        marker.title = `Vaga ${spot.id} (Col ${spot.column}, Fila ${spot.row}) - ${spot.occupied ? 'Ocupada' : 'Livre'}`;
-        marker.addEventListener('click', (e) => {
-            e.stopPropagation();
-            removeSpot(spot.id);
-        });
-        elements.spotsPreview.appendChild(marker);
-    });
-
-    // Adiciona itens na lista
-    spotsBeingConfigured.forEach(spot => {
-        const spotItem = document.createElement('div');
-        spotItem.className = `spot-item ${spot.occupied ? 'occupied' : ''}`;
-        spotItem.innerHTML = `
-            <div class="spot-info">
-                <strong>Vaga ${spot.id}</strong> - Col ${spot.column}, Fila ${spot.row}
-                <br>Status: ${spot.occupied ? 'Ocupada' : 'Livre'}
-                <br>Posição: (${Math.round(spot.x)}, ${Math.round(spot.y)})
-            </div>
-            <div class="spot-actions">
-                <button class="btn toggle-status" data-id="${spot.id}">
-                    <i class="fas fa-sync-alt"></i> Alternar
-                </button>
-                <button class="btn btn-danger remove-spot" data-id="${spot.id}">
-                    <i class="fas fa-trash"></i> Remover
-                </button>
-            </div>
-        `;
-        elements.spotsList.appendChild(spotItem);
-    });
-
-    // Adiciona eventos
-    document.querySelectorAll('.remove-spot').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const id = parseInt(e.target.getAttribute('data-id'));
-            removeSpot(id);
-        });
-    });
-
-    document.querySelectorAll('.toggle-status').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const id = parseInt(e.target.getAttribute('data-id'));
-            toggleSpotStatus(id);
-        });
-    });
-}
-
-// Remover vaga
-function removeSpot(id) {
-    spotsBeingConfigured = spotsBeingConfigured.filter(spot => spot.id !== id);
-    renderConfiguredSpots();
-}
-
-// Alternar status da vaga
-function toggleSpotStatus(id) {
-    const spotIndex = spotsBeingConfigured.findIndex(spot => spot.id === id);
-    if (spotIndex !== -1) {
-        spotsBeingConfigured[spotIndex].occupied = !spotsBeingConfigured[spotIndex].occupied;
-        spotsBeingConfigured[spotIndex].intensity = spotsBeingConfigured[spotIndex].occupied ? 4 : 0.5;
-        renderConfiguredSpots();
-    }
-}
-
-// Adicione no início do arquivo, após a definição dos elementos
+// Tema switcher
 const themeSwitcher = document.createElement('div');
 themeSwitcher.className = 'theme-switcher';
 themeSwitcher.innerHTML = `
@@ -468,19 +294,28 @@ themeSwitcher.innerHTML = `
 `;
 document.body.appendChild(themeSwitcher);
 
-// Adicione esta função após a função setupTabs()
 function setupThemeSwitcher() {
     const themeButtons = document.querySelectorAll('.theme-btn');
     
     themeButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const theme = button.getAttribute('data-theme');
+        button.addEventListener('click', function() {
+            const theme = this.getAttribute('data-theme');
+            const loadingText = 'Aplicando tema...';
+            
+            // Mostra e esconde rápido sem animation
+            const loading = document.createElement('div');
+            loading.className = 'loading-notification';
+            loading.textContent = loadingText;
+            document.body.appendChild(loading);
+            
+            // Aplica o tema
             document.documentElement.setAttribute('data-theme', theme);
             localStorage.setItem('beststop-theme', theme);
             
-            // Adiciona efeito de loading ao trocar tema
-            showLoading('Aplicando tema...');
-            setTimeout(hideLoading, 800);
+            // Remove após 1 segundo
+            setTimeout(() => {
+                loading.remove();
+            }, 1000);
         });
     });
     
@@ -489,8 +324,13 @@ function setupThemeSwitcher() {
     document.documentElement.setAttribute('data-theme', savedTheme);
 }
 
-// Adicione estas funções para o efeito de loading
+// Funções para o efeito de loading
+let loadingTimeout = null;
+
 function showLoading(message = 'Carregando...') {
+    // Cancela qualquer loading anterior que esteja pendente
+    hideLoading();
+    
     const loadingOverlay = document.createElement('div');
     loadingOverlay.className = 'loading-overlay active';
     loadingOverlay.innerHTML = `
@@ -498,18 +338,87 @@ function showLoading(message = 'Carregando...') {
         <div class="loading-text">${message}</div>
     `;
     document.body.appendChild(loadingOverlay);
+    
+    // Configura timeout de segurança para esconder automaticamente
+    loadingTimeout = setTimeout(() => {
+        hideLoading();
+    }, 3000); // Fallback após 3 segundos
 }
 
 function hideLoading() {
+    // Limpa o timeout se existir
+    if (loadingTimeout) {
+        clearTimeout(loadingTimeout);
+        loadingTimeout = null;
+    }
+    
     const loadingOverlay = document.querySelector('.loading-overlay');
     if (loadingOverlay) {
         loadingOverlay.classList.remove('active');
-        setTimeout(() => {
-            loadingOverlay.remove();
-        }, 300);
+        
+        // Remove o elemento após a transição
+        loadingOverlay.addEventListener('transitionend', () => {
+            if (loadingOverlay.parentNode) {
+                loadingOverlay.parentNode.removeChild(loadingOverlay);
+            }
+        }, { once: true });
     }
 }
+// ============ NOVAS FUNÇÕES PREMIUM ============
 
+// Função para mostrar notificações
+function showNotification(message, type = 'success') {
+  const container = document.getElementById('notification-container');
+  const notification = document.createElement('div');
+  
+  notification.className = `notification ${type} fade-in`;
+  notification.textContent = message;
+  
+  container.appendChild(notification);
+  
+  // Mostra a notificação
+  setTimeout(() => notification.classList.add('show'), 100);
+  
+  // Remove após 5 segundos
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 500);
+  }, 5000);
+}
+
+// Função para simular loading
+function simulateLoading() {
+  const cards = document.querySelectorAll('.info-card');
+  cards.forEach(card => {
+    const value = card.querySelector('.card-value');
+    if (value) {
+      value.classList.add('skeleton');
+      value.textContent = '';
+    }
+  });
+  
+  setTimeout(() => {
+    cards.forEach(card => {
+      const value = card.querySelector('.card-value');
+      if (value) value.classList.remove('skeleton');
+    });
+  }, 1500);
+}
+
+// ============ EXEMPLO DE USO ============
+// Você pode chamar essas funções quando necessário, por exemplo:
+
+// Mostrar notificação ao carregar
+document.addEventListener('DOMContentLoaded', () => {
+  // Exemplo: mostrar notificação
+  showNotification('Sistema conectado com sucesso', 'success');
+  
+  // Exemplo: simular loading
+  simulateLoading();
+  
+  // Seu código initApp() existente
+  initApp();
+});
 
 // Iniciar a aplicação quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initApp);

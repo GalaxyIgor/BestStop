@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>BestStop - Monitoramento de Vagas</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -18,8 +18,7 @@
         <h1 class="logo-text">BestStop</h1>
       </div>
       <nav class="header-nav">
-        <a href="#" class="nav-link active" data-tab="dashboard"><i class="fas fa-map"></i> Mapa</a>
-        <a href="#" class="nav-link" data-tab="config"><i class="fas fa-cog"></i> Configurações</a>
+        <a href="#" class="nav-link active"><i class="fas fa-map"></i> Mapa</a>
       </nav>
     </div>
   </header>
@@ -78,79 +77,33 @@
           </div>
         </div>
       </section>
-
-      <div class="map-container">
-        <div id="map"></div>
-        <div class="map-legend">
-          <div class="legend-item">
-            <span class="legend-color" style="background: green;"></span>
-            <span class="legend-label">Área Livre</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background: yellow;"></span>
-            <span class="legend-label">Baixa Ocupação</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background: orange;"></span>
-            <span class="legend-label">Média Ocupação</span>
-          </div>
-          <div class="legend-item">
-            <span class="legend-color" style="background: red;"></span>
-            <span class="legend-label">Alta Ocupação</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Aba de Configuração -->
-    <div id="config" class="tab-content">
-      <div class="config-container">
-        <div class="config-form">
-          <h2><i class="fas fa-cog"></i> Configurar Vagas</h2>
-          
-          <div class="form-group">
-            <label for="spot-column"><i class="fas fa-columns"></i> Coluna:</label>
-            <select id="spot-column" class="form-control">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label for="spot-row"><i class="fas fa-bars"></i> Fila:</label>
-            <input type="number" id="spot-row" class="form-control" min="1" value="1">
-          </div>
-          
-          <div class="form-group">
-            <label for="spot-status"><i class="fas fa-car"></i> Status:</label>
-            <select id="spot-status" class="form-control">
-              <option value="false">Livre</option>
-              <option value="true">Ocupada</option>
-            </select>
-          </div>
-          
-          <div class="form-actions">
-            <button id="save-config" class="btn btn-primary">
-              <i class="fas fa-save"></i> Salvar Configuração
-            </button>
-            <button id="clear-config" class="btn btn-danger">
-              <i class="fas fa-trash"></i> Limpar Tudo
-            </button>
+      <div class="map-container premium-container">
+        <div class="map-container">
+          <div id="map"></div>
+          <div class="map-legend">
+            <div class="legend-item">
+              <span class="legend-color" style="background: green;"></span>
+              <span class="legend-label">Área Livre</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: yellow;"></span>
+              <span class="legend-label">Baixa Ocupação</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: orange;"></span>
+              <span class="legend-label">Média Ocupação</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-color" style="background: red;"></span>
+              <span class="legend-label">Alta Ocupação</span>
+            </div>
           </div>
         </div>
-        
-        <div class="config-preview">
-          <div class="config-map-container">
-            <div id="config-map"></div>
-            <div id="spots-preview"></div>
-          </div>
-          <div id="spots-list" class="spots-list"></div>
         </div>
-      </div>
     </div>
   </main>
+
+  <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
