@@ -1,0 +1,32 @@
+[
+  {
+    "sector": "A1",
+    "coordinates": [
+      { "x": 100, "y": 40, "intensity": 1 },
+      { "x": 100, "y": 90, "intensity": 1 },
+      { "x": 100, "y": 150, "intensity": 2 }
+    ],
+    "totalSpots": 10,
+    "status": "medium"
+  },
+  {
+    "sector": "A2",
+    "coordinates": [
+      { "x": 250, "y": 40, "intensity": 1 },
+      { "x": 250, "y": 90, "intensity": 1 },
+      { "x": 250, "y": 150, "intensity": 2 }
+    ],
+    "totalSpots": 10,
+    "status": "low"
+  },
+  {
+    "sector": "B1",
+    "coordinates": [
+      { "x": 570, "y": 40, "intensity": 0.2 },
+      { "x": 570, "y": 90, "intensity": 1 },
+      { "x": 570, "y": 150, "intensity": 2 }
+    ],
+    "totalSpots": 10,
+    "status": "high"
+  }
+]

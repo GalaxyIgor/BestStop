@@ -189,6 +189,74 @@ function processHeatmapData(data) {
     };
 }
 
+// Variável para controle da última atualização
+let lastDataHash = '';
+
+async function carregarHeatmap() {
+  try {
+    const response = await fetch(`data.json?t=${Date.now()}`);
+    const data = await response.json();
+    
+    // Calcula um hash simples dos dados para comparar
+    const currentHash = JSON.stringify(data);
+    
+    // Só atualiza se os dados mudaram
+    if (currentHash !== lastDataHash) {
+      lastDataHash = currentHash;
+      
+      // Processa os dados
+      const processedData = processHeatmapData(data);
+      updateParkingState(processedData);
+      
+      // Atualiza o heatmap
+      if (window.heatLayer) {
+        map.removeLayer(window.heatLayer);
+      }
+      
+      const heatPoints = data.map(ponto => [ponto.y, ponto.x, ponto.intensity]);
+      
+      window.heatLayer = L.heatLayer(heatPoints, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+      }).addTo(map);
+      
+      atualizarHorario();
+      showNotification('Dados atualizados com sucesso', 'success');
+    }
+  } catch (err) {
+    console.error("Erro ao carregar heatmap:", err);
+    showNotification('Erro ao atualizar dados', 'error');
+  }
+}
+
+// Reduzir o intervalo para 1 segundo (opcional)
+setInterval(carregarHeatmap, 1000);
+
+
+function setupWebSocket() {
+  const socket = new WebSocket('ws://localhost:8080');
+  
+  socket.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    const processedData = processHeatmapData(data);
+    updateParkingState(processedData);
+    showNotification('Dados atualizados em tempo real', 'success');
+  };
+  
+  socket.onerror = function(error) {
+    console.error('WebSocket error:', error);
+    // Fallback para polling
+    setInterval(carregarHeatmap, 1000);
+  };
+}
+
+function atualizarHorario() {
+  const agora = new Date();
+  const horarioFormatado = agora.toLocaleString('pt-BR');
+  document.getElementById("last-update").innerText = horarioFormatado;
+}
+
 // Atualizar display do status
 function updateStatusDisplay() {
     elements.occupied.textContent = parkingState.occupied;
@@ -434,3 +502,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Iniciar a aplicação quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', initApp);
+
