@@ -59,7 +59,19 @@ async function initApp() {
 async function loadParkingData() {
     try {
         const response = await fetch('data.json');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+            // Retorna dados padrão se o arquivo não for encontrado
+            if (response.status === 404) {
+                console.warn("Arquivo data.json não encontrado, usando dados padrão");
+                return processHeatmapData([{
+                    sector: "DEFAULT",
+                    coordinates: [{x: 100, y: 100, intensity: 0}],
+                    totalSpots: 1,
+                    status: "low"
+                }]);
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         return processHeatmapData(data);
     } catch (error) {
@@ -149,20 +161,56 @@ function setupMap() {
 }
 // Processar dados para heatmap
 function processHeatmapData(data) {
-    let totalOccupied = 0, totalSpots = 0;
-
-    data.forEach(sector => {
+    let totalOccupied = 0, totalAvailable = 0, totalSpots = 0;
+    
+    const processedSectors = data.map(sector => {
         totalOccupied += sector.occupied;
+        totalAvailable += (sector.total_spots - sector.occupied);
         totalSpots += sector.total_spots;
+
+        // Calcula pontos para o heatmap baseado na ocupação
+        const heatPoints = [];
+        const width = Math.abs(sector.position.x2 - sector.position.x1);
+        const height = Math.abs(sector.position.y2 - sector.position.y1);
+        const spotsPerRow = 5; // Ajuste conforme necessário
+        
+        // Cria pontos fictícios para o heatmap
+        for (let i = 0; i < sector.total_spots; i++) {
+            const row = Math.floor(i / spotsPerRow);
+            const col = i % spotsPerRow;
+            const x = sector.position.x1 + (width * (col / spotsPerRow));
+            const y = sector.position.y1 + (height * (row / Math.ceil(sector.total_spots / spotsPerRow)));
+            
+            // Intensidade baseada na ocupação do setor
+            const intensity = i < sector.occupied ? 1.5 : 0.3;
+            heatPoints.push({ x, y, intensity });
+        }
+
+        return {
+            ...sector,
+            coordinates: heatPoints,
+            available: sector.total_spots - sector.occupied,
+            occupancyRate: Math.round((sector.occupied / sector.total_spots) * 100)
+        };
     });
 
     return {
         totalSpots,
         occupied: totalOccupied,
-        available: totalSpots - totalOccupied,
+        available: totalAvailable,
         lastUpdate: new Date().toISOString(),
-        sectors: data
+        sectors: processedSectors
     };
+}
+function atualizarHorario() {
+    const agora = new Date();
+    elements.lastUpdate.textContent = agora.toLocaleString('pt-BR', {
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
 }
 
 // Carregar heatmap manualmente
@@ -176,15 +224,6 @@ async function carregarHeatmap() {
             lastDataHash = currentHash;
             const processedData = processHeatmapData(data);
             updateParkingState(processedData);
-
-            if (window.heatLayer) map.removeLayer(window.heatLayer);
-            const heatPoints = data.map(ponto => [ponto.y, ponto.x, ponto.intensity]);
-
-            window.heatLayer = L.heatLayer(heatPoints, {
-                radius: 25,
-                blur: 15,
-                maxZoom: 17,
-            }).addTo(map);
             
             atualizarHorario();
             showNotification('Dados atualizados com sucesso', 'success');
@@ -195,27 +234,6 @@ async function carregarHeatmap() {
     }
 }
 
-// WebSocket
-function setupWebSocket() {
-    const socket = new WebSocket('ws://localhost:8080');
-  
-    socket.onmessage = event => {
-        const data = JSON.parse(event.data);
-        const processedData = processHeatmapData(data);
-        updateParkingState(processedData);
-        showNotification('Dados atualizados em tempo real', 'success');
-    };
-  
-    socket.onerror = error => {
-        console.error('WebSocket error:', error);
-        setInterval(carregarHeatmap, 1000); // fallback
-    };
-}
-
-function atualizarHorario() {
-    const agora = new Date();
-    document.getElementById("last-update").innerText = agora.toLocaleString('pt-BR');
-}
 
 // Atualização de status
 function updateStatusDisplay() {
@@ -242,37 +260,40 @@ function updateStatusDisplay() {
 }
 
 function updateSectors() {
-    window.sectorLayer.clearLayers();
+    if (!window.sectorLayer) {
+        window.sectorLayer = L.layerGroup().addTo(map);
+    } else {
+        window.sectorLayer.clearLayers();
+    }
 
     parkingState.sectors.forEach(sector => {
-        const pos = sector.position;
         const bounds = [
-            [pos.y1, pos.x1], // Canto superior esquerdo
-            [pos.y2, pos.x2]  // Canto inferior direito
+            [sector.position.y1, sector.position.x1],
+            [sector.position.y2, sector.position.x2]
         ];
         
         const color = getSectorColor(sector.status);
         const opacity = sector.status === 'high' ? 0.6 : 0.4;
 
-        // Retângulo do setor
+        // Cria retângulo do setor
         L.rectangle(bounds, {
             color: color,
             fillColor: color,
             fillOpacity: opacity,
             weight: 2
-        })
-        .bindTooltip(`
+        }).bindTooltip(`
             <strong>Setor ${sector.sector}</strong><br>
             Vagas: ${sector.occupied}/${sector.total_spots}<br>
             ${Math.round((sector.occupied/sector.total_spots)*100)}% ocupado
-        `, {direction: 'top'})
-        .addTo(window.sectorLayer);
+        `, {direction: 'top'}).addTo(window.sectorLayer);
 
-        // Label centralizado
-        const centerY = (pos.y1 + pos.y2) / 2;
-        const centerX = (pos.x1 + pos.x2) / 2;
+        // Adiciona label do setor
+        const center = [
+            (sector.position.y1 + sector.position.y2) / 2,
+            (sector.position.x1 + sector.position.x2) / 2
+        ];
         
-        L.marker([centerY, centerX], {
+        L.marker(center, {
             icon: L.divIcon({
                 html: `<div class="sector-label">${sector.sector}</div>`,
                 className: 'sector-label-container',
@@ -335,24 +356,28 @@ function updateParkingState(data) {
 }
 
 function updateSectorInfo() {
-    const sectorsContainer = document.getElementById('sectors-info') || createSectorsContainer();
+    const sectorsContainer = document.getElementById('sectors-info');
+    if (!sectorsContainer) return;
+
     sectorsContainer.innerHTML = '';
-  
+
     parkingState.sectors.forEach(sector => {
-        const occupied = sector.coordinates.filter(s => s.intensity > 2).length;
-        const available = sector.coordinates.length - occupied;
-        const occupancyRate = Math.round((occupied / sector.coordinates.length) * 100);
-        
         const sectorEl = document.createElement('div');
         sectorEl.className = `sector-card ${sector.status}`;
         sectorEl.innerHTML = `
             <h3>Setor ${sector.sector}</h3>
-            <div class="sector-stats">
-                <span>Ocupadas: ${occupied}</span>
-                <span>Livres: ${available}</span>
-                <span>Ocupação: ${occupancyRate}%</span>
+            <div class="sector-meta">
+                <span class="sector-dimensions">
+                    ${Math.abs(sector.position.x2 - sector.position.x1)}x${Math.abs(sector.position.y2 - sector.position.y1)}m
+                </span>
+                <span class="sector-spots">${sector.total_spots} vagas</span>
             </div>
-            <div class="sector-status">Status: ${getStatusText(sector.status)}</div>
+            <div class="sector-stats">
+                <span><i class="fas fa-car"></i> ${sector.occupied}</span>
+                <span><i class="fas fa-parking"></i> ${sector.available}</span>
+                <span><i class="fas fa-percentage"></i> ${sector.occupancyRate}%</span>
+            </div>
+            <div class="sector-status">${getStatusText(sector.status)}</div>
         `;
         sectorsContainer.appendChild(sectorEl);
     });

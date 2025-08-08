@@ -2,27 +2,34 @@
   {
     "sector": "A1",
     "status": "low",
-    "position": {"x1": 100, "y1": 150, "x2": 200, "y2": 250},
+    "position": {"x1": 20, "y1": 0, "x2": 170, "y2": 600},
     "total_spots": 20,
     "occupied": 12
   },
   {
     "sector": "A2",
     "status": "medium",
-    "position": {"x1": 210, "y1": 150, "x2": 310, "y2": 250},
+    "position": {"x1": 170, "y1": 0, "x2": 320, "y2": 600},
     "total_spots": 24,
     "occupied": 22
   },{
     "sector": "B1",
     "status": "medium",
-    "position": {"x1": 100, "y1": 150, "x2": 200, "y2": 250},
+    "position": {"x1": 480, "y1": 0, "x2": 620, "y2": 600},
     "total_spots": 20,
     "occupied": 12
   },
   {
     "sector": "B2",
     "status": "high",
-    "position": {"x1": 700, "y1": 540, "x2": 310, "y2": 250},
+    "position": {"x1": 620, "y1": 0, "x2": 770, "y2": 600},
+    "total_spots": 24,
+    "occupied": 22
+  },
+  {
+    "sector": "Corredor",
+    "status": "low",
+    "position": {"x1": 320, "y1": 0, "x2": 480, "y2": 600},
     "total_spots": 24,
     "occupied": 22
   }
