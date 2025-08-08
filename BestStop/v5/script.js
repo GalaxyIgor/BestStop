@@ -115,37 +115,41 @@ function setupMap() {
 
     map = L.map('map', {
         crs: L.CRS.Simple,
-        minZoom: -2,
-        maxZoom: 4,
-        zoomSnap: 0.25,
-        zoomDelta: 0.25,
+        minZoom: -1,
+        maxZoom: 2,
+        zoomSnap: 0.5,
+        zoomDelta: 0.5,
         wheelPxPerZoomLevel: 120,
         zoomControl: true,
         preferCanvas: true
     });
 
-    map.scrollWheelZoom._delta = 0.2;
-    map.touchZoom._delta = 0.1;
-
-    map.on('zoomanim', e => {
-        map.setView(e.center, e.zoom, { animate: true, duration: 0.3 });
-    });
-
-    map.doubleClickZoom.disable();
-    map.on('dblclick', e => {
-        map.setView(e.latlng, map.getZoom() + 0.5, { animate: true, duration: 0.3 });
-    });
-
     const bounds = [[0, 0], [mapHeight, mapWidth]];
-    L.imageOverlay('background.webp', bounds, {
-        errorOverlayUrl: 'background.png',
-        alt: 'Mapa do estacionamento'
-    }).addTo(map);
     
+    // 1. Camada base: Imagem de fundo (100% visível)
+    const baseLayer = L.imageOverlay('background.webp', bounds, {
+        errorOverlayUrl: 'background.png',
+        alt: 'Mapa do estacionamento',
+        opacity: 1.0
+    }).addTo(map);
+
+    // 2. Camada azul semi-transparente
+    const blueOverlay = L.rectangle(bounds, {
+        color: 'transparent',
+        fillColor: '#006effff',
+        fillOpacity: 0.7,
+        weight: 0
+    }).addTo(map);
+
+    // 3. Camada de setores (A1, B1, etc.)
+    window.sectorLayer = L.layerGroup().addTo(map);
+
+    // 4. Heatmap (ficará no topo)
+    window.heatLayer = L.layerGroup().addTo(map);
+
     map.fitBounds(bounds);
     map.setZoom(0);
 }
-
 // Processar dados para heatmap
 function processHeatmapData(data) {
     let totalOccupied = 0, totalAvailable = 0, totalSpots = 0;
@@ -255,32 +259,64 @@ function updateStatusDisplay() {
 
 // Atualização do mapa de calor
 function updateHeatmap() {
-    if (heatLayer) map.removeLayer(heatLayer);
+    // Limpa camadas anteriores
+    window.sectorLayer.clearLayers();
+    window.heatLayer.clearLayers();
 
-    const sectorLayers = parkingState.sectors.map(sector => {
-        const color = getSectorColor(sector.status);
+    // 1. Adiciona os setores (A1, B1, etc.)
+    parkingState.sectors.forEach(sector => {
         const bounds = calculateSectorBounds(sector.coordinates);
-        return L.rectangle(bounds, {
-            color, fillColor: color, fillOpacity: 0.3, weight: 2
-        }).bindPopup(`Setor ${sector.sector}<br>Status: ${getStatusText(sector.status)}`);
+        const color = getSectorColor(sector.status);
+        
+        const sectorRect = L.rectangle(bounds, {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.2,  // Mais transparente
+            weight: 2
+        }).bindTooltip(`Setor ${sector.sector}`, { permanent: false });
+
+        // Adiciona label do setor no centro
+        const center = getCenter(bounds);
+        const label = L.divIcon({
+            html: `<div class="sector-label">${sector.sector}</div>`,
+            className: 'sector-label-container',
+            iconSize: [40, 40]
+        });
+
+        L.marker(center, { icon: label, interactive: false })
+            .addTo(window.sectorLayer);
+
+        sectorRect.addTo(window.sectorLayer);
     });
 
-    const heatDataMain = parkingState.spots.map(p => [p.y, p.x, p.intensity]);
-  
-    heatLayer = L.layerGroup([
-        ...sectorLayers,
-        L.heatLayer(heatDataMain, {
-            radius: 25, blur: 15, maxZoom: 1,
-            gradient: { 0.2: 'yellow', 0.6: 'orange', 1.0: 'red' }
-        })
-    ]).addTo(map);
+    // 2. Adiciona pontos do heatmap (última camada)
+    const heatData = parkingState.spots.map(p => [p.y, p.x, p.intensity * 2]); // Aumenta intensidade
+    
+    L.heatLayer(heatData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 1,
+        gradient: {
+            0.1: 'rgba(0, 132, 255, 1)',   // Verde
+            0.5: 'rgba(255, 255, 0, 0.9)', // Amarelo
+            1.0: 'rgba(255, 0, 0, 1)'      // Vermelho
+        }
+    }).addTo(window.heatLayer);
+}
+
+// Função auxiliar para calcular o centro do retângulo
+function getCenter(bounds) {
+    return [
+        (bounds[0][0] + bounds[1][0]) / 2,
+        (bounds[0][1] + bounds[1][1]) / 2
+    ];
 }
 
 function getSectorColor(status) {
     switch(status) {
         case 'high': return '#e74c3c';
-        case 'medium': return '#f39c12';
-        case 'low': return '#2ecc71';
+        case 'medium': return '#f3c212ff';
+        case 'low': return '#0062ffff';
         default: return '#3498db';
     }
 }
@@ -347,22 +383,43 @@ function createSectorsContainer() {
 // Tema
 function setupThemeSwitcher() {
     const themeButtons = document.querySelectorAll('.theme-btn');
+    
     themeButtons.forEach(button => {
         button.addEventListener('click', function() {
             const theme = this.getAttribute('data-theme');
-            const loading = document.createElement('div');
-            loading.className = 'loading-notification';
-            loading.textContent = 'Aplicando tema...';
-            document.body.appendChild(loading);
-            
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('beststop-theme', theme);
-            
-            setTimeout(() => loading.remove(), 1000);
+            applyTheme(theme);
         });
     });
-    const savedTheme = localStorage.getItem('beststop-theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
+    
+    // Verifica se há um tema salvo no localStorage ou usa o preferido do sistema
+    const savedTheme = localStorage.getItem('beststop-theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+    applyTheme(initialTheme);
+}
+
+function applyTheme(theme) {
+    // Mostra feedback visual durante a troca
+    const loading = document.createElement('div');
+    loading.className = 'loading-notification';
+    loading.textContent = 'Mudando tema...';
+    document.body.appendChild(loading);
+    
+    // Aplica o tema
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('beststop-theme', theme);
+    
+    // Atualiza o estado ativo dos botões
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-theme') === theme);
+    });
+    
+    // Remove o feedback após 1 segundo
+    setTimeout(() => {
+        loading.remove();
+        showNotification(`Tema ${theme === 'dark' ? 'escuro' : 'claro'} aplicado`, 'success');
+    }, 800);
 }
 
 // Loading
@@ -424,5 +481,6 @@ function simulateLoading() {
 // Iniciar aplicação
 document.addEventListener('DOMContentLoaded', () => {
     simulateLoading();
+    setupThemeSwitcher(); // Adicione esta linha
     initApp();
 });
