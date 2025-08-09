@@ -756,3 +756,31 @@ a {
     background-color: rgba(76, 201, 240, 0.1);
     color: var(--success-color);
 }
+/* Estilos fixos para os ícones dos cards */
+.card-icon {
+    width: 50px !important;
+    height: 50px !important;
+    min-width: 50px !important;
+    min-height: 50px !important;
+    flex: 0 0 50px !important;
+    font-size: 1.5rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+    transition: all var(--transition-speed) ease;
+}
+
+/* Garante que o ícone interno mantenha proporção */
+.card-icon i {
+    font-size: 1.5rem !important;
+    line-height: 1;
+    width: 100%;
+    text-align: center;
+}
+
+/* Remove qualquer efeito de transformação que possa alterar o tamanho */
+.info-card:hover .card-icon {
+    transform: none !important;
+}

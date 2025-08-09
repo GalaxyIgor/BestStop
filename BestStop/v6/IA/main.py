@@ -8,8 +8,8 @@ app = Flask(__name__)
 # ==========================
 # CONFIGURAÇÃO DO MODELO
 # ==========================
-MODEL_PATH = Path("C:/Users/Meu-PC/OneDrive/Documentos/Projects/ProjetoFetin-AI/runs/detect/treinamento_vagas/weights/best.pt")
-VIDEO_PATH = Path("C:/Users/Meu-PC/OneDrive/Documentos/Projects/ProjetoFetin-AI/Foto2.jpg")
+MODEL_PATH = Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v6/IA/runs/detect/treinamento_vagas/weights/best.pt")
+VIDEO_PATH = Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v6/IA/Foto2.jpg")
 
 model = YOLO(MODEL_PATH)
 

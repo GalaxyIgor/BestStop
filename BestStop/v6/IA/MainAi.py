@@ -4,16 +4,16 @@ from pathlib import Path
 
 # 1. Carrega o modelo treinado
 model = YOLO(
-    'C:/Users/Meu-PC/OneDrive/Documentos/Projects/ProjetoFetin-AI/runs/detect/treinamento_vagas/weights/best.pt')
+    'C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v6/IA/runs/detect/treinamento_vagas/weights/best.pt')
 
-# Faz a detecção em uma imagem
-results = model.predict('C:/Users/Meu-PC/OneDrive/Documentos/Projects/ProjetoFetin-AI/Foto2.jpg',
+# Faz a deteção em uma imagem
+results = model.predict('C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v6/IA/Foto2.jpg',
                         # conf = limite de confiança (0-3)
                         save=True, conf=0.1)
 
 # 4. Processa os resultados
 for result in results:
-    # Conta as detecções por classe
+    # Conta as deteções por classe
     vagas_livres = sum(result.boxes.cls == 1)
     vagas_ocupadas = sum(result.boxes.cls == 0)
     total_vagas = vagas_livres + vagas_ocupadas
