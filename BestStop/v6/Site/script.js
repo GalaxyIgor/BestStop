@@ -21,6 +21,14 @@ let map, heatLayer;
 let lastDataHash = '';
 let loadingTimeout = null;
 
+// URL da API (substitua pela sua URL real)
+const API_URL = 'http://localhost:5000/dados';
+
+fetch("http://localhost:5000/dados")
+  .then(response => response.json())
+  .then(data => console.log("Dados da API:", data))
+  .catch(error => console.error("Erro:", error));
+
 // Função debounce
 function debounce(func, timeout = 300) {
     let timer;
@@ -55,30 +63,24 @@ async function initApp() {
     showNotification('Sistema conectado com sucesso', 'success');
 }
 
-// Carregar dados do estacionamento
+
+// Carregar dados da API
 async function loadParkingData() {
     try {
-        const response = await fetch('data.json');
+        const response = await fetch(API_URL);
         if (!response.ok) {
-            // Retorna dados padrão se o arquivo não for encontrado
-            if (response.status === 404) {
-                console.warn("Arquivo data.json não encontrado, usando dados padrão");
-                return processHeatmapData([{
-                    sector: "DEFAULT",
-                    coordinates: [{x: 100, y: 100, intensity: 0}],
-                    totalSpots: 1,
-                    status: "low"
-                }]);
-            }
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await response.json();
-        return processHeatmapData(data);
+        const apiData = await response.json();
+
+        // Converter os dados da API para o formato esperado pelo sistema
+        return processApiData(apiData);
     } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        console.error('Erro ao carregar dados da API:', error);
         throw error;
     }
 }
+
 
 function showErrorToUser(message) {
     const errorEl = document.createElement('div');
@@ -86,6 +88,27 @@ function showErrorToUser(message) {
     errorEl.textContent = message;
     document.body.prepend(errorEl);
     setTimeout(() => errorEl.remove(), 5000);
+}
+
+// Processar dados da API para o formato do sistema
+function processApiData(apiData) {
+    // Criar dados fictícios de setores (ajuste conforme sua necessidade real)
+    const sectors = [{
+        sector: "A",
+        position: { x1: 100, y1: 100, x2: 300, y2: 200 },
+        total_spots: apiData.total_vagas,
+        occupied: apiData.vagas_ocupadas,
+        status: apiData.perc_ocupadas > 70 ? 'high' :
+               apiData.perc_ocupadas > 40 ? 'medium' : 'low'
+    }];
+
+    return {
+        totalSpots: apiData.total_vagas,
+        occupied: apiData.vagas_ocupadas,
+        available: apiData.vagas_livres,
+        lastUpdate: new Date().toISOString(),
+        sectors: sectors
+    };
 }
 
 // Atualização automática
@@ -99,6 +122,7 @@ function setupAutoRefresh() {
         }
     }, 5000);
 }
+
 
 // Layout responsivo
 function handleResponsiveLayout() {
@@ -121,7 +145,7 @@ function handleResponsiveLayout() {
     }
 }
 
-// Configuração do mapa
+// Configuração do mapa (mantido igual)
 function setupMap() {
     const mapWidth = 800, mapHeight = 600;
 
@@ -159,49 +183,9 @@ function setupMap() {
     map.fitBounds(bounds);
     map.setZoom(0);
 }
-// Processar dados para heatmap
-function processHeatmapData(data) {
-    let totalOccupied = 0, totalAvailable = 0, totalSpots = 0;
-    
-    const processedSectors = data.map(sector => {
-        totalOccupied += sector.occupied;
-        totalAvailable += (sector.total_spots - sector.occupied);
-        totalSpots += sector.total_spots;
 
-        // Calcula pontos para o heatmap baseado na ocupação
-        const heatPoints = [];
-        const width = Math.abs(sector.position.x2 - sector.position.x1);
-        const height = Math.abs(sector.position.y2 - sector.position.y1);
-        const spotsPerRow = 5; // Ajuste conforme necessário
-        
-        // Cria pontos fictícios para o heatmap
-        for (let i = 0; i < sector.total_spots; i++) {
-            const row = Math.floor(i / spotsPerRow);
-            const col = i % spotsPerRow;
-            const x = sector.position.x1 + (width * (col / spotsPerRow));
-            const y = sector.position.y1 + (height * (row / Math.ceil(sector.total_spots / spotsPerRow)));
-            
-            // Intensidade baseada na ocupação do setor
-            const intensity = i < sector.occupied ? 1.5 : 0.3;
-            heatPoints.push({ x, y, intensity });
-        }
 
-        return {
-            ...sector,
-            coordinates: heatPoints,
-            available: sector.total_spots - sector.occupied,
-            occupancyRate: Math.round((sector.occupied / sector.total_spots) * 100)
-        };
-    });
 
-    return {
-        totalSpots,
-        occupied: totalOccupied,
-        available: totalAvailable,
-        lastUpdate: new Date().toISOString(),
-        sectors: processedSectors
-    };
-}
 function atualizarHorario() {
     const agora = new Date();
     elements.lastUpdate.textContent = agora.toLocaleString('pt-BR', {
@@ -213,26 +197,27 @@ function atualizarHorario() {
     });
 }
 
-// Carregar heatmap manualmente
-async function carregarHeatmap() {
+// Carregar dados manualmente
+async function carregarDados() {
     try {
-        const response = await fetch(`data.json?t=${Date.now()}`);
-        const data = await response.json();
-        const currentHash = JSON.stringify(data);
+        const response = await fetch(`${API_URL}?t=${Date.now()}`);
+        const apiData = await response.json();
+        const currentHash = JSON.stringify(apiData);
 
         if (currentHash !== lastDataHash) {
             lastDataHash = currentHash;
-            const processedData = processHeatmapData(data);
+            const processedData = processApiData(apiData);
             updateParkingState(processedData);
-            
+
             atualizarHorario();
             showNotification('Dados atualizados com sucesso', 'success');
         }
     } catch (err) {
-        console.error("Erro ao carregar heatmap:", err);
+        console.error("Erro ao carregar dados:", err);
         showNotification('Erro ao atualizar dados', 'error');
     }
 }
+
 
 
 // Atualização de status
@@ -271,7 +256,7 @@ function updateSectors() {
             [sector.position.y1, sector.position.x1],
             [sector.position.y2, sector.position.x2]
         ];
-        
+
         const color = getSectorColor(sector.status);
         const opacity = sector.status === 'high' ? 0.6 : 0.4;
 
@@ -292,7 +277,7 @@ function updateSectors() {
             (sector.position.y1 + sector.position.y2) / 2,
             (sector.position.x1 + sector.position.x2) / 2
         ];
-        
+
         L.marker(center, {
             icon: L.divIcon({
                 html: `<div class="sector-label">${sector.sector}</div>`,
@@ -302,14 +287,6 @@ function updateSectors() {
             interactive: false
         }).addTo(window.sectorLayer);
     });
-}
-
-// Função auxiliar para calcular o centro
-function getCenter(bounds) {
-    return [
-        (bounds[0][0] + bounds[1][0]) / 2,
-        (bounds[0][1] + bounds[1][1]) / 2
-    ];
 }
 
 // Função auxiliar para calcular o centro do retângulo
@@ -351,7 +328,7 @@ function updateParkingState(data) {
     if (!data) return;
     parkingState = { ...data, sectors: data.sectors || [] };
     updateStatusDisplay();
-    updateSectors();  // Alterado de updateHeatmap() para updateSectors()
+    updateSectors();
     updateSectorInfo();
 }
 
@@ -382,7 +359,6 @@ function updateSectorInfo() {
         sectorsContainer.appendChild(sectorEl);
     });
 }
-
 function createSectorsContainer() {
     const container = document.createElement('div');
     container.id = 'sectors-info';
@@ -490,9 +466,10 @@ function simulateLoading() {
     }, 1500);
 }
 
+
 // Iniciar aplicação
 document.addEventListener('DOMContentLoaded', () => {
     simulateLoading();
-    setupThemeSwitcher(); // Adicione esta linha
+    setupThemeSwitcher();
     initApp();
 });

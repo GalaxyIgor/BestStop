@@ -2,8 +2,10 @@ from flask import Flask, jsonify
 from ultralytics import YOLO
 import cv2
 from pathlib import Path
+from flask_cors import CORS  # o cors possibilita que outras portas peguem info da api
 
 app = Flask(__name__)
+CORS(app)  # Habilita CORS para todas as rotas
 
 # ==========================
 # CONFIGURAÇÃO DO MODELO
