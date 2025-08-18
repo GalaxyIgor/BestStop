@@ -95,11 +95,23 @@ function processApiData(apiData) {
     // Criar dados fictícios de setores (ajuste conforme sua necessidade real)
     const sectors = [{
         sector: "A",
-        position: { x1: 100, y1: 100, x2: 300, y2: 200 },
+        position: { x1: 30, y1: 570, x2: 170, y2: 20},
         total_spots: apiData.total_vagas,
         occupied: apiData.vagas_ocupadas,
+        available: apiData.vagas_livres, // Adicionando vagas disponíveis
+        occupancyRate: Math.round((apiData.vagas_ocupadas / apiData.total_vagas) * 100), // Calculando taxa de ocupação
         status: apiData.perc_ocupadas > 70 ? 'high' :
                apiData.perc_ocupadas > 40 ? 'medium' : 'low'
+    },
+    {
+            sector: "B",
+            position: { x1: 170, y1: 570, x2: 310, y2: 20 },
+            total_spots: apiData.total_vagas,
+            occupied: apiData.vagas_ocupadas,
+            available: apiData.vagas_livres, // Adicionando vagas disponíveis
+            occupancyRate: Math.round((apiData.vagas_ocupadas / apiData.total_vagas) * 100), // Calculando taxa de ocupação
+            status: apiData.perc_ocupadas > 70 ? 'high' :
+                apiData.perc_ocupadas > 40 ? 'medium' : 'low'
     }];
 
     return {
@@ -299,9 +311,9 @@ function getCenter(bounds) {
 
 function getSectorColor(status) {
     switch(status) {
-        case 'high': return '#e74c3c';
-        case 'medium': return '#f3c212ff';
-        case 'low': return '#0062ffff';
+        case 'high': return '#ff0000';
+        case 'medium': return '#ffc600';
+        case 'low': return '#0095ff';
         default: return '#3498db';
     }
 }
@@ -339,6 +351,10 @@ function updateSectorInfo() {
     sectorsContainer.innerHTML = '';
 
     parkingState.sectors.forEach(sector => {
+        const available = sector.available || (sector.total_spots - sector.occupied);
+        const occupancyRate = sector.occupancyRate ||
+            (sector.total_spots > 0 ? Math.round((sector.occupied / sector.total_spots) * 100) : 0);
+
         const sectorEl = document.createElement('div');
         sectorEl.className = `sector-card ${sector.status}`;
         sectorEl.innerHTML = `
@@ -351,8 +367,8 @@ function updateSectorInfo() {
             </div>
             <div class="sector-stats">
                 <span><i class="fas fa-car"></i> ${sector.occupied}</span>
-                <span><i class="fas fa-parking"></i> ${sector.available}</span>
-                <span><i class="fas fa-percentage"></i> ${sector.occupancyRate}%</span>
+                <span><i class="fas fa-parking"></i> ${available}</span>
+                <span><i class="fas fa-percentage"></i> ${occupancyRate}%</span>
             </div>
             <div class="sector-status">${getStatusText(sector.status)}</div>
         `;
