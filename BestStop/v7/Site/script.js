@@ -303,7 +303,7 @@ function getSectorColor(status) {
     switch(status) {
         case 'high': return '#ff0000';
         case 'medium': return '#ffc600';
-        case 'low': return '#0095ff';
+        case 'low': return '#11ff00';
         default: return '#3498db';
     }
 }
