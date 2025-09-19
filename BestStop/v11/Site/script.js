@@ -93,8 +93,8 @@ function processApiData(apiData) {
     // Criar dados fictícios de setores com ocupações variadas
     const sectors = [
         {
-            sector: "A",
-            position: { x1: 30, y1: 570, x2: 170, y2: 20},
+            sector: "A1",
+            position: { x1: 50, y1: 510, x2: 125, y2: 420},
             total_spots: Math.round(apiData.total_vagas),
             occupied: Math.round(apiData.vagas_ocupadas), // Setor mais ocupado
             available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas),
@@ -103,34 +103,74 @@ function processApiData(apiData) {
                    (Math.round(apiData.vagas_ocupadas) / Math.round(apiData.total_vagas)) > 0.4 ? 'medium' : 'low'
         },
         {
-            sector: "B",
-            position: { x1: 170, y1: 570, x2: 310, y2: 20},
+            sector: "A2",
+            position: { x1: 50, y1: 420, x2: 125, y2: 280},
             total_spots: Math.round(apiData.total_vagas),
-            occupied: Math.round(apiData.vagas_ocupadas * 0.6), // Ocupação média
-            available: Math.round(apiData.total_vagas ) - Math.round(apiData.vagas_ocupadas * 0.6),
-            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.6) / Math.round(apiData.total_vagas)) * 100),
-            status: (Math.round(apiData.vagas_ocupadas * 0.6) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
-                   (Math.round(apiData.vagas_ocupadas * 0.6) / Math.round(apiData.total_vagas)) > 0.4 ? 'medium' : 'low'
+            occupied: Math.round(apiData.vagas_ocupadas * 0.9), // Ocupação média
+            available: Math.round(apiData.total_vagas ) - Math.round(apiData.vagas_ocupadas * 0.9),
+            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.9) / Math.round(apiData.total_vagas)) * 100),
+            status: (Math.round(apiData.vagas_ocupadas * 0.9) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
+                   (Math.round(apiData.vagas_ocupadas * 0.9) / Math.round(apiData.total_vagas)) > 0.4 ? 'medium' : 'low'
         },
         {
-            sector: "C",
-            position: { x1: 490, y1: 570, x2: 630, y2: 20},
+            sector: "A3",
+            position: { x1: 50, y1: 280, x2: 125, y2: 140},
             total_spots: Math.round(apiData.total_vagas),
-            occupied: Math.round(apiData.vagas_ocupadas * 0.8), // Menos ocupado
+                occupied: Math.round(apiData.vagas_ocupadas * 0.8), // Menos ocupado
             available: Math.round(apiData.total_vagas ) - Math.round(apiData.vagas_ocupadas * 0.8),
             occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.8) / Math.round(apiData.total_vagas)) * 100),
             status: (Math.round(apiData.vagas_ocupadas * 0.8) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
                    (Math.round(apiData.vagas_ocupadas * 0.8) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
         },
         {
-            sector: "D",
-            position: { x1: 630, y1: 570, x2: 770, y2: 20},
+            sector: "B1",
+            position: { x1: 200, y1: 130, x2:350, y2: 50},
             total_spots: Math.round(apiData.total_vagas ),
-            occupied: Math.round(apiData.vagas_ocupadas * 0.3), // Muito pouco ocupado
-            available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas * 0.3),
-            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.3) / Math.round(apiData.total_vagas)) * 100),
-            status: (Math.round(apiData.vagas_ocupadas * 0.3) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
-                   (Math.round(apiData.vagas_ocupadas * 0.3) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
+            occupied: Math.round(apiData.vagas_ocupadas * 0.7), // Muito pouco ocupado
+            available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas * 0.7),
+            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.7) / Math.round(apiData.total_vagas)) * 100),
+            status: (Math.round(apiData.vagas_ocupadas * 0.7) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
+                   (Math.round(apiData.vagas_ocupadas * 0.7) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
+        },
+        {
+            sector: "C1",
+            position: { x1: 610, y1: 140, x2:760, y2: 230},
+            total_spots: Math.round(apiData.total_vagas ),
+            occupied: Math.round(apiData.vagas_ocupadas * 0.6), // Muito pouco ocupado
+            available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas * 0.6),
+            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.6) / Math.round(apiData.total_vagas)) * 100),
+            status: (Math.round(apiData.vagas_ocupadas * 0.6) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
+                   (Math.round(apiData.vagas_ocupadas * 0.6) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
+        },
+        {
+            sector: "C2",
+            position: { x1: 680, y1: 230, x2:760, y2: 500},
+            total_spots: Math.round(apiData.total_vagas ),
+            occupied: Math.round(apiData.vagas_ocupadas * 0.5), // Muito pouco ocupado
+            available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas * 0.5),
+            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.5) / Math.round(apiData.total_vagas)) * 100),
+            status: (Math.round(apiData.vagas_ocupadas * 0.5) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
+                   (Math.round(apiData.vagas_ocupadas * 0.5) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
+        },
+        {
+            sector: "D1",
+            position: { x1: 470, y1: 350, x2:680, y2: 500},
+            total_spots: Math.round(apiData.total_vagas ),
+            occupied: Math.round(apiData.vagas_ocupadas * 0.4), // Muito pouco ocupado
+            available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas * 0.4),
+            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.4) / Math.round(apiData.total_vagas)) * 100),
+            status: (Math.round(apiData.vagas_ocupadas * 0.4) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
+                   (Math.round(apiData.vagas_ocupadas * 0.4) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
+        },
+        {
+            sector: "D2",
+            position: { x1: 280, y1: 350, x2:470, y2: 500},
+            total_spots: Math.round(apiData.total_vagas ),
+            occupied: Math.round(apiData.vagas_ocupadas * 0.4), // Muito pouco ocupado
+            available: Math.round(apiData.total_vagas) - Math.round(apiData.vagas_ocupadas * 0.4),
+            occupancyRate: Math.round((Math.round(apiData.vagas_ocupadas * 0.4) / Math.round(apiData.total_vagas)) * 100),
+            status: (Math.round(apiData.vagas_ocupadas * 0.4) / Math.round(apiData.total_vagas)) > 0.7 ? 'high' :
+                   (Math.round(apiData.vagas_ocupadas * 0.4) / Math.round(apiData.total_vagas )) > 0.4 ? 'medium' : 'low'
         }
     ];
 
@@ -207,12 +247,12 @@ function setupMap() {
     }).addTo(map);
 
     // 2. Camada azul semi-transparente
-    L.rectangle(bounds, {
-        color: 'transparent',
-        fillColor: '#1a73e8',
-        fillOpacity: 0.3,
-        weight: 0
-    }).addTo(map);
+    //L.rectangle(bounds, {
+    //    color: 'transparent',
+    //    fillColor: '#1a73e8',
+    //    fillOpacity: 0.3,
+    //    weight: 0
+    //}).addTo(map);
 
     // 3. Camada única para os setores
     window.sectorLayer = L.layerGroup().addTo(map);
@@ -328,12 +368,12 @@ function updateSectors() {
     });
 }
 // Função auxiliar para calcular o centro do retângulo
-function getCenter(bounds) {
-    return [
-        (bounds[0][0] + bounds[1][0]) / 2,
-        (bounds[0][1] + bounds[1][1]) / 2
-    ];
-}
+//function getCenter(bounds) {
+//    return [
+//        (bounds[0][0] + bounds[1][0]) / 2,
+//        (bounds[0][1] + bounds[1][1]) / 2
+//    ];
+//}
 
 function getSectorColor(status) {
     switch(status) {
@@ -392,14 +432,6 @@ function updateSectorInfo() {
         `;
         sectorsContainer.appendChild(sectorEl);
     });
-}
-function createSectorsContainer() {
-    const container = document.createElement('div');
-    container.id = 'sectors-info';
-    container.className = 'sectors-container';
-    document.querySelector('.dashboard-container')
-        .insertBefore(container, document.querySelector('.map-container'));
-    return container;
 }
 
 // Tema
