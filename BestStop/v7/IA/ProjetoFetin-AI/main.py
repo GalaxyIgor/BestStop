@@ -24,10 +24,10 @@ CORS(app, resources={
 # ==========================
 MODEL_PATH = Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/runs/detect/treinamento_vagas/weights/best.pt")
 IMAGENS = [
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto1.jpg"),
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto2.jpg"),
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto3.jpg"),
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto4.jpg")
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto6.jpg"),
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto5.jpg"),
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto4.jpg"),
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v7/IA/ProjetoFetin-AI/Foto1.jpg")
 ]
 
 model = YOLO(MODEL_PATH)
@@ -92,7 +92,7 @@ def ciclo_atualizacao():
     while True:
         dados_atual = analisar_vagas(IMAGENS[indice_atual])
         indice_atual = (indice_atual + 1) % len(IMAGENS)
-        time.sleep(10)  # espera 10 segundos
+        time.sleep(60)  # espera 1 minuto
 
 # ==========================
 # ROTA DA API
