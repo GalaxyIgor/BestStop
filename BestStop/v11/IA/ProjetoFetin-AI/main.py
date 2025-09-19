@@ -16,12 +16,12 @@ CORS(app)
 # ==========================
 # CONFIGURAÇÃO DO MODELO
 # ==========================
-MODEL_PATH = Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v10/IA/ProjetoFetin-AI/runs/detect/treinamento_vagas/weights/best.pt")
+MODEL_PATH = Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v11/IA/ProjetoFetin-AI/runs/detect/treinamento_vagas/weights/best.pt")
 IMAGENS = [
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v10/IA/ProjetoFetin-AI/Foto6.jpg"),
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v10/IA/ProjetoFetin-AI/Foto5.jpg"),
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v10/IA/ProjetoFetin-AI/Foto4.jpg"),
-    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v10/IA/ProjetoFetin-AI/Foto1.jpg")
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v11/IA/ProjetoFetin-AI/Foto6.jpg"),
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v11/IA/ProjetoFetin-AI/Foto5.jpg"),
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v11/IA/ProjetoFetin-AI/Foto4.jpg"),
+    Path("C:/Users/igorn/OneDrive/Galaxy Codes Git Hub/BestStop/BestStop/BestStop/v11/IA/ProjetoFetin-AI/Foto1.jpg")
 ]
 
 model = YOLO(MODEL_PATH)
